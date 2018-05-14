@@ -25,7 +25,7 @@ endpoint http:Listener listener {
 
 // Student finder service.
 @http:ServiceConfig { basePath: "/studentfinder" }
-service<http:Service> orderMgt bind listener {
+service<http:Service> studentFinder bind listener {
 
     // Resource that handles the HTTP GET requests that are directed to a specific
     // student using path '/student/<studentId>'
