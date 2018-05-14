@@ -31,7 +31,7 @@ service<http:Service> schoolInfo bind schoolInfoListener {
     // student using path '/schoolinfo/<schoolId>'
     @http:ResourceConfig {
         methods: ["GET"],
-        path: "/a/{schoolId}"
+        path: "/{schoolId}"
     }
     getSchool(endpoint client, http:Request req, string schoolId) {
         http:Response response;
