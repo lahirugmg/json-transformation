@@ -77,11 +77,11 @@ service<http:Service> studentInfo bind studentInfoListener {
         _ = client->respond(response);
     }
 
-    // Resource that handles the HTTP GET requests that are used to search student with query parametr School Id
+    // Resource that handles the HTTP GET requests that are used to search student with query parametr school Id or addmission year
     // using path '/student'
     @http:ResourceConfig {
         methods: ["GET"],
-        path: "/students"
+        path: "/*"
     }
     getStudentBySearch(endpoint client, http:Request req) {
 
@@ -89,7 +89,8 @@ service<http:Service> studentInfo bind studentInfoListener {
 
         var params = req.getQueryParams();
         var schoolId = <string>params.schoolId;
-        var addmissionYear = <string>params.addmissionYear;
+
+        var addmissionYear = "";//<string>params.addmissionYear;
         xml studentsDetails;
         if (null != schoolId) {
             if ("34534253" == schoolId) {

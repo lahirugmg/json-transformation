@@ -23,28 +23,85 @@ endpoint http:Listener listener {
     port: 9090
 };
 
+endpoint http:Client studentInfoEP {
+    url: "http://localhost:9091/studentinfo"
+};
+
 // Student finder service.
 @http:ServiceConfig { basePath: "/studentfinder" }
 service<http:Service> studentFinder bind listener {
 
+
     // Resource that handles the HTTP GET requests that are directed to a specific
-    // student using path '/student/<studentId>'
+    // student using path '/<studentId>'
     @http:ResourceConfig {
         methods: ["GET"],
-        path: "/students/{studentId}"
+        path: "/{studentId}"
     }
     getStudentById(endpoint client, http:Request req, string studentId) {
 
+        log:printInfo("Student finder req - /{studentId} resource - studentId" + studentId);
+        log:printInfo("Path " + req.rawPath);
+
+        http:Response finderResponse;
+
+        string studentInfoPath = "/" + studentId;
+        var studentInfoResp = studentInfoEP->get(untaint studentInfoPath);
+
+        xml res;
+        match studentInfoResp {
+            http:Response response => {
+                match (response.getXmlPayload()) {
+
+                    xml res => {
+                        log:printInfo("Student info response " + io:sprintf("%l", res));
+                        finderResponse.setJsonPayload(res.toJSON({}));
+                    }
+
+                    error err => log:printError(err.message);
+                }
+            }
+
+            error err => log:printError(err.message);
+        }
+        _ = client->respond(finderResponse);
     }
 
-    // Resource that handles the HTTP GET requests that are used to search student with query parametrs Age,
-    //Admission year, School name
-    // using path '/student'
+    // Resource that handles the HTTP GET requests that are used to search student with query parametr school Id or addmission year
+    // using path '/'
     @http:ResourceConfig {
-        methods: ["GET"],
-        path: "/students"
+        path: "/*"
     }
     getStudentBySearch(endpoint client, http:Request req) {
 
+        http:Response finderResponse;
+
+        var params = req.getQueryParams();
+        var schoolId = <string>params.schoolId;
+        log:printInfo("Student finder req - /* resource - schoolId " + schoolId);
+        if (null != schoolId) {
+
+
+            string studentInfoPath = "?schoolId=" + schoolId;
+            var studentInfoResp = studentInfoEP->get(untaint studentInfoPath);
+
+            xml res;
+            match studentInfoResp {
+                http:Response response => {
+                    match (response.getXmlPayload()) {
+
+                        xml res => {
+                            log:printInfo("Student info response " + io:sprintf("%l", res));
+                            finderResponse.setJsonPayload(res.toJSON({}));
+                        }
+
+                        error err => log:printError(err.message);
+                    }
+                }
+
+                error err => log:printError(err.message);
+            }
+            _ = client->respond(finderResponse);
+        }
     }
 }
