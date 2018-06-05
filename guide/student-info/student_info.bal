@@ -153,7 +153,7 @@ service<http:Service> studentInfo bind studentInfoListener {
     }
 }
 
-function getStudentAsXml(string studentId, string firstName, string lastName, string schoolId, string birthDate,
+function getStudentAsXml(string studentId, string schoolId, string firstName, string lastName, string birthDate,
                          int addmissionYear, boolean usCitizen) returns xml {
     xml studentDetails = xml `<student>
                         <studentId>{{studentId}}</studentId>
