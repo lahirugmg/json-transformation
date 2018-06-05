@@ -27,6 +27,10 @@ endpoint http:Client studentInfoEP {
     url: "http://localhost:9091/studentinfo"
 };
 
+endpoint http:Client schoolInfoEP {
+    url: "http://localhost:9092/schoolinfo"
+};
+
 // Student finder service.
 @http:ServiceConfig { basePath: "/studentfinder" }
 service<http:Service> studentFinder bind listener {
@@ -40,21 +44,40 @@ service<http:Service> studentFinder bind listener {
     }
     getStudentById(endpoint client, http:Request req, string studentId) {
 
-        log:printInfo("Student finder req - /{studentId} resource - studentId" + studentId);
-        log:printInfo("Path " + req.rawPath);
-
         http:Response finderResponse;
 
         string studentInfoPath = "/" + studentId;
         var studentInfoResp = studentInfoEP->get(untaint studentInfoPath);
 
-        xml res;
         match studentInfoResp {
             http:Response response => {
                 match (response.getXmlPayload()) {
 
                     xml res => {
                         log:printInfo("Student info response " + io:sprintf("%l", res));
+
+                        string schoolId = res.selectDescendants("schoolId").getTextValue();
+
+                        string schoolInfoPath = "/" + schoolId;
+                        log:printInfo("School info path " + schoolInfoPath);
+
+                        var schoolInfoResp = schoolInfoEP->get(untaint schoolInfoPath);
+
+                        match schoolInfoResp {
+                            http:Response response => {
+                                match (response.getJsonPayload()) {
+
+                                    json sclRes => {
+                                        log:printInfo("School info response " + sclRes.toString());
+                                    }
+
+                                    error err => log:printError(err.message);
+                                }
+                            }
+
+                            error err => log:printError(err.message);
+                        }
+
                         finderResponse.setJsonPayload(res.toJSON({}));
                     }
 
@@ -78,7 +101,7 @@ service<http:Service> studentFinder bind listener {
 
         var params = req.getQueryParams();
         var schoolId = <string>params.schoolId;
-        log:printInfo("Student finder req - /* resource - schoolId " + schoolId);
+
         if (null != schoolId) {
 
 
