@@ -18,7 +18,6 @@ import ballerina/io;
 import ballerina/http;
 import ballerina/log;
 
-
 endpoint http:Listener listener {
     port: 9090
 };
@@ -46,48 +45,22 @@ service<http:Service> studentFinder bind listener {
 
         http:Response finderResponse;
 
-        string studentInfoPath = "/" + studentId;
-        var studentInfoResp = studentInfoEP->get(untaint studentInfoPath);
+        try {
+            string studentInfoPath = "/" + studentId;
+            var studentInfoResp = check studentInfoEP->get(untaint studentInfoPath);
+            xml studentInfoXml = check studentInfoResp.getXmlPayload();
 
-        match studentInfoResp {
-            http:Response response => {
-                match (response.getXmlPayload()) {
+            string schoolId = studentInfoXml.selectDescendants("schoolId").getTextValue();
+            string schoolInfoPath = "/" + schoolId;
+            var schoolInfoResp = check schoolInfoEP->get(untaint schoolInfoPath);
+            json schoolInfoJson = check schoolInfoResp.getJsonPayload();
 
-                    xml res => {
-                        log:printInfo("Student info response " + io:sprintf("%l", res));
+            log:printInfo("School info response " + schoolInfoJson.toString());
+            _ = client->respond(finderResponse);
 
-                        string schoolId = res.selectDescendants("schoolId").getTextValue();
-
-                        string schoolInfoPath = "/" + schoolId;
-                        log:printInfo("School info path " + schoolInfoPath);
-
-                        var schoolInfoResp = schoolInfoEP->get(untaint schoolInfoPath);
-
-                        match schoolInfoResp {
-                            http:Response response => {
-                                match (response.getJsonPayload()) {
-
-                                    json sclRes => {
-                                        log:printInfo("School info response " + sclRes.toString());
-                                    }
-
-                                    error err => log:printError(err.message);
-                                }
-                            }
-
-                            error err => log:printError(err.message);
-                        }
-
-                        finderResponse.setJsonPayload(res.toJSON({}));
-                    }
-
-                    error err => log:printError(err.message);
-                }
-            }
-
-            error err => log:printError(err.message);
+        } catch (error err) {
+            log:printError(err.message);
         }
-        _ = client->respond(finderResponse);
     }
 
     // Resource that handles the HTTP GET requests that are used to search student with query parametr school Id or addmission year
@@ -100,31 +73,27 @@ service<http:Service> studentFinder bind listener {
         http:Response finderResponse;
 
         var params = req.getQueryParams();
-        var schoolId = <string>params.schoolId;
+        string studentInfoPath;
+        if (params.hasKey("schoolId")) {
 
-        if (null != schoolId) {
+            studentInfoPath = "?schoolId=" + <string>params.schoolId;
 
+        } else if (params.hasKey("addmissionYear")) {
 
-            string studentInfoPath = "?schoolId=" + schoolId;
-            var studentInfoResp = studentInfoEP->get(untaint studentInfoPath);
-
-            xml res;
-            match studentInfoResp {
-                http:Response response => {
-                    match (response.getXmlPayload()) {
-
-                        xml res => {
-                            log:printInfo("Student info response " + io:sprintf("%l", res));
-                            finderResponse.setJsonPayload(res.toJSON({}));
-                        }
-
-                        error err => log:printError(err.message);
-                    }
-                }
-
-                error err => log:printError(err.message);
-            }
-            _ = client->respond(finderResponse);
+            studentInfoPath = "?addmissionYear=" + <string>params.addmissionYear;
         }
+        try {
+            http:Response studentInfoResp = check studentInfoEP->get(untaint studentInfoPath);
+
+            xml studentInfoXml = check studentInfoResp.getXmlPayload();
+
+            log:printInfo("Student info response " + io:sprintf("%l", studentInfoXml));
+            finderResponse.setJsonPayload(studentInfoXml.toJSON({}));
+
+        } catch (error err){
+            log:printError(err.message);
+        }
+        _ = client->respond(finderResponse);
+
     }
 }
