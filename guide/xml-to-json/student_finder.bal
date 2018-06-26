@@ -57,9 +57,7 @@ service<http:Service> studentFinder bind listener {
             json schoolInfoJson = check schoolInfoResp.getJsonPayload();
 
             json studentResponseJson = getStudentJson(studentId, studentInfoXml, schoolInfoJson);
-
-            log:printInfo("School finder response " + studentResponseJson.toString());
-
+            
             finderResponse.setJsonPayload(studentResponseJson);
             _ = client->respond(finderResponse);
 
@@ -92,13 +90,10 @@ service<http:Service> studentFinder bind listener {
 
             xml studentInfoXml = check studentInfoResp.getXmlPayload();
 
-            log:printInfo("Student info response " + io:sprintf("%l", studentInfoXml));
-
             finderResponse.setJsonPayload(studentInfoXml.toJSON({}));
 
         } catch (error err){
-            log:
-            printError(err.message);
+            log:printError(err.message);
         }
         _ = client->respond(finderResponse);
 
@@ -107,22 +102,27 @@ service<http:Service> studentFinder bind listener {
 
 function getStudentJson(string studentId, xml student, json school) returns json {
 
-    json studentJson = {
-        "studentId": studentId,
-        "fullName": student.selectDescendants("firstName").getTextValue()
-            + " " + student.selectDescendants("lastName").getTextValue(),
-        "schoolId": student.selectDescendants("schoolId").getTextValue(),
-        "age": calculateAge(student.selectDescendants("birthDate").getTextValue()),
-        "addmissionYear": student.selectDescendants("addmissionYear").getTextValue(),
-        "usCitizen": student.selectDescendants("usCitizen").getTextValue(),
-        "school": {
-            "schoolId": school.schoolId,
-            "name": school.name,
-            "address": school.address,
-            "principal": school.principal
-        }
-    };
+    json studentJson;
+    try {
 
+        studentJson = {
+            "studentId": studentId,
+            "fullName": student.selectDescendants("firstName").getTextValue()
+                + " " + student.selectDescendants("lastName").getTextValue(),
+            "age": calculateAge(student.selectDescendants("birthDate").getTextValue()),
+            "addmissionYear": check <int>student.selectDescendants("addmissionYear").getTextValue(),
+            "usCitizen": student.selectDescendants("usCitizen").getTextValue(),
+            "school": {
+                "schoolId": <string>(check <int>school.schoolId),
+                "name": school.name,
+                "address": school.address,
+                "principal": school.principal
+            }
+        };
+    } catch (error e) {
+        log:printError(e.message);
+
+    }
     return studentJson;
 }
 
@@ -135,13 +135,13 @@ function calculateAge(string dateOfBirth) returns int {
 
         age = time.year() - check <int>dataOfBirthValues[2];
 
-        if ((time.month() < check <int>dataOfBirthValues[1]) || (time.month() == check <int>dataOfBirthValues[1])
+        if ((time.month() < check <int>dataOfBirthValues[1]) || ((time.month() == check <int>dataOfBirthValues[1])
                 && time.day() < check <int>dataOfBirthValues[0])) {
             age--;
         }
 
     } catch (error e) {
-        log:printError("Error while converting string to int");
+        log:printError("Error while converting string to int " + e.message);
     }
 
     return age;
