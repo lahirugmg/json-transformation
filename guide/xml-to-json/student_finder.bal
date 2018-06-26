@@ -93,6 +93,7 @@ service<http:Service> studentFinder bind listener {
             xml studentInfoXml = check studentInfoResp.getXmlPayload();
 
             log:printInfo("Student info response " + io:sprintf("%l", studentInfoXml));
+
             finderResponse.setJsonPayload(studentInfoXml.toJSON({}));
 
         } catch (error err){
@@ -134,8 +135,8 @@ function calculateAge(string dateOfBirth) returns int {
 
         age = time.year() - check <int>dataOfBirthValues[2];
 
-        if ((time.month() < check <int>dataOfBirthValues[1]) || ((time.month() == check <int>dataOfBirthValues[1])
-                && (time.day() < check <int>dataOfBirthValues[0]))) {
+        if ((time.month() < check <int>dataOfBirthValues[1]) || (time.month() == check <int>dataOfBirthValues[1])
+                && time.day() < check <int>dataOfBirthValues[0])) {
             age--;
         }
 
