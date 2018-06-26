@@ -17,6 +17,7 @@
 import ballerina/io;
 import ballerina/http;
 import ballerina/log;
+import ballerina/time;
 
 endpoint http:Listener listener {
     port: 9090
@@ -33,7 +34,6 @@ endpoint http:Client schoolInfoEP {
 // Student finder service.
 @http:ServiceConfig { basePath: "/studentfinder" }
 service<http:Service> studentFinder bind listener {
-
 
     // Resource that handles the HTTP GET requests that are directed to a specific
     // student using path '/<studentId>'
@@ -53,13 +53,18 @@ service<http:Service> studentFinder bind listener {
             string schoolId = studentInfoXml.selectDescendants("schoolId").getTextValue();
             string schoolInfoPath = "/" + schoolId;
             var schoolInfoResp = check schoolInfoEP->get(untaint schoolInfoPath);
+
             json schoolInfoJson = check schoolInfoResp.getJsonPayload();
 
-            log:printInfo("School info response " + schoolInfoJson.toString());
+            json studentResponseJson = getStudentJson(studentId, studentInfoXml, schoolInfoJson);
+
+            log:printInfo("School finder response " + studentResponseJson.toString());
+
+            finderResponse.setJsonPayload(studentResponseJson);
             _ = client->respond(finderResponse);
 
         } catch (error err) {
-            log:printError(err.message);
+            log:printError("An error occurred while calling backend service " + err.message);
         }
     }
 
@@ -91,9 +96,52 @@ service<http:Service> studentFinder bind listener {
             finderResponse.setJsonPayload(studentInfoXml.toJSON({}));
 
         } catch (error err){
-            log:printError(err.message);
+            log:
+            printError(err.message);
         }
         _ = client->respond(finderResponse);
 
     }
+}
+
+function getStudentJson(string studentId, xml studentInfo, json schoolInfo) returns json {
+
+    json student = {
+        "studentId": studentId,
+        "fullName": studentInfo.selectDescendants("firstName").getTextValue()
+            + " " + studentInfo.selectDescendants("lastName").getTextValue(),
+        "schoolId": studentInfo.selectDescendants("schoolId").getTextValue(),
+        "age": calculateAge(studentInfo.selectDescendants("birthDate").getTextValue()),
+        "addmissionYear": studentInfo.selectDescendants("addmissionYear").getTextValue(),
+        "usCitizen": studentInfo.selectDescendants("usCitizen").getTextValue(),
+        "school": {
+            "schoolId": schoolInfo.schoolId,
+            "name": schoolInfo.name,
+            "address": schoolInfo.address,
+            "principal": schoolInfo.principal
+        }
+    };
+
+    return student;
+}
+
+function calculateAge(string dateOfBirth) returns int {
+
+    int age;
+    try {
+        string[] dataOfBirthValues = dateOfBirth.split("/");
+        time:Time time = time:currentTime();
+
+        age = time.year() - check <int>dataOfBirthValues[2];
+
+        if ((time.month() < check <int>dataOfBirthValues[1]) || ((time.month() == check <int>dataOfBirthValues[1])
+                && (time.day() < check <int>dataOfBirthValues[0]))) {
+            age--;
+        }
+
+    } catch (error e) {
+        log:printError("Error while converting string to int");
+    }
+
+    return age;
 }
