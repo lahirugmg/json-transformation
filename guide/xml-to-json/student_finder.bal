@@ -104,25 +104,25 @@ service<http:Service> studentFinder bind listener {
     }
 }
 
-function getStudentJson(string studentId, xml studentInfo, json schoolInfo) returns json {
+function getStudentJson(string studentId, xml student, json school) returns json {
 
-    json student = {
+    json studentJson = {
         "studentId": studentId,
-        "fullName": studentInfo.selectDescendants("firstName").getTextValue()
-            + " " + studentInfo.selectDescendants("lastName").getTextValue(),
-        "schoolId": studentInfo.selectDescendants("schoolId").getTextValue(),
-        "age": calculateAge(studentInfo.selectDescendants("birthDate").getTextValue()),
-        "addmissionYear": studentInfo.selectDescendants("addmissionYear").getTextValue(),
-        "usCitizen": studentInfo.selectDescendants("usCitizen").getTextValue(),
+        "fullName": student.selectDescendants("firstName").getTextValue()
+            + " " + student.selectDescendants("lastName").getTextValue(),
+        "schoolId": student.selectDescendants("schoolId").getTextValue(),
+        "age": calculateAge(student.selectDescendants("birthDate").getTextValue()),
+        "addmissionYear": student.selectDescendants("addmissionYear").getTextValue(),
+        "usCitizen": student.selectDescendants("usCitizen").getTextValue(),
         "school": {
-            "schoolId": schoolInfo.schoolId,
-            "name": schoolInfo.name,
-            "address": schoolInfo.address,
-            "principal": schoolInfo.principal
+            "schoolId": school.schoolId,
+            "name": school.name,
+            "address": school.address,
+            "principal": school.principal
         }
     };
 
-    return student;
+    return studentJson;
 }
 
 function calculateAge(string dateOfBirth) returns int {
