@@ -50,19 +50,14 @@ service<http:Service> studentFinder bind listener {
             var studentInfoResp = check studentInfoEP->get(untaint studentInfoPath);
             xml studentInfoXml = check studentInfoResp.getXmlPayload();
 
-            string schoolId = studentInfoXml.selectDescendants("schoolId").getTextValue();
-            string schoolInfoPath = "/" + schoolId;
-            var schoolInfoResp = check schoolInfoEP->get(untaint schoolInfoPath);
-
-            json schoolInfoJson = check schoolInfoResp.getJsonPayload();
-
-            json studentResponseJson = getStudentJson(studentId, studentInfoXml, schoolInfoJson);
-            
+            json studentResponseJson = getStudentJson(studentInfoXml);
             finderResponse.setJsonPayload(studentResponseJson);
+
             _ = client->respond(finderResponse);
 
         } catch (error err) {
             log:printError("An error occurred while calling backend service " + err.message);
+            //set error respond
         }
     }
 
@@ -90,23 +85,42 @@ service<http:Service> studentFinder bind listener {
 
             xml studentInfoXml = check studentInfoResp.getXmlPayload();
 
-            finderResponse.setJsonPayload(studentInfoXml.toJSON({}));
+            json studentArray = getStudentArray(studentInfoXml);
+            finderResponse.setJsonPayload(studentArray);
 
         } catch (error err){
             log:printError(err.message);
+            //set error respond
         }
         _ = client->respond(finderResponse);
 
     }
 }
 
-function getStudentJson(string studentId, xml student, json school) returns json {
+function getStudentArray(xml studentInfoXml) returns json {
+    json studentArray = [];
+
+    foreach i, x in studentInfoXml.selectDescendants("student").elements(){
+
+        json studentResponseJson = getStudentJson(x);
+        studentArray[studentArray.count()] = studentResponseJson;
+    }
+    return studentArray;
+}
+
+function getStudentJson(xml student) returns json {
+
+    string schoolId = student.selectDescendants("schoolId").getTextValue();
+    string schoolInfoPath = "/" + schoolId;
+    var schoolInfoResp = check schoolInfoEP->get(untaint schoolInfoPath);
+
+    json school = check schoolInfoResp.getJsonPayload();
 
     json studentJson;
     try {
 
         studentJson = {
-            "studentId": studentId,
+            "studentId": student.selectDescendants("studentId").getTextValue(),
             "fullName": student.selectDescendants("firstName").getTextValue()
                 + " " + student.selectDescendants("lastName").getTextValue(),
             "age": calculateAge(student.selectDescendants("birthDate").getTextValue()),
