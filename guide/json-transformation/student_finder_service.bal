@@ -33,7 +33,7 @@ endpoint http:Client schoolInfoEP {
 
 // Student finder service.
 @http:ServiceConfig { basePath: "/studentfinder" }
-service<http:Service> studentFinder bind listener {
+service<http:Service> studentFinderService bind listener {
 
     // Resource that handles the HTTP GET requests that are directed to a specific
     // student using path '/<studentId>'

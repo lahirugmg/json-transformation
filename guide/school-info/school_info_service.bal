@@ -25,7 +25,7 @@ endpoint http:Listener schoolInfoListener {
 
 // School info service.
 @http:ServiceConfig { basePath: "/schoolinfo" }
-service<http:Service> schoolInfo bind schoolInfoListener {
+service<http:Service> schoolInfoService bind schoolInfoListener {
 
     // Resource that handles the HTTP GET requests that are directed to a specific
     // student using path '/schoolinfo/<schoolId>'
