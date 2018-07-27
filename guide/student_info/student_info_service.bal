@@ -72,7 +72,7 @@ service<http:Service> studentInfoService bind studentInfoListener {
         }
 
         // Response payload
-        response.setXmlPayload(studentDetails);
+        response.setXmlPayload(untaint studentDetails);
         // Send the response to the caller
         _ = client->respond(response);
     }
@@ -158,7 +158,7 @@ service<http:Service> studentInfoService bind studentInfoListener {
         }
 
         // Response payload
-        response.setXmlPayload(studentsDetails);
+        response.setXmlPayload(untaint studentsDetails);
         // Send the response to the caller
         _ = client->respond(response);
     }

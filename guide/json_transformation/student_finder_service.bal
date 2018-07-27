@@ -51,7 +51,7 @@ service<http:Service> studentFinderService bind listener {
             xml studentInfoXml = check studentInfoResp.getXmlPayload();
 
             json studentResponseJson = getStudentJson(studentInfoXml);
-            finderResponse.setJsonPayload(studentResponseJson);
+            finderResponse.setJsonPayload(untaint studentResponseJson);
 
             _ = client->respond(finderResponse);
 
@@ -86,7 +86,7 @@ service<http:Service> studentFinderService bind listener {
             xml studentInfoXml = check studentInfoResp.getXmlPayload();
 
             json studentArray = getStudentArray(studentInfoXml);
-            finderResponse.setJsonPayload(studentArray);
+            finderResponse.setJsonPayload(untaint studentArray);
 
         } catch (error err){
             log:printError(err.message);

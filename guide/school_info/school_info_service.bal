@@ -69,7 +69,7 @@ service<http:Service> schoolInfoService bind schoolInfoListener {
         }
 
         // Response payload
-        response.setJsonPayload(schoolDetails);
+        response.setJsonPayload(untaint schoolDetails);
         // Send the response to the caller
         _ = client->respond(response);
     }
