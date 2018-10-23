@@ -120,12 +120,12 @@ function getStudentJson(xml student) returns json {
     try {
 
         studentJson = {
-            "studentId": student.selectDescendants("studentId").getTextValue(),
-            "fullName": student.selectDescendants("firstName").getTextValue()
-                + " " + student.selectDescendants("lastName").getTextValue(),
-            "age": calculateAge(student.selectDescendants("birthDate").getTextValue()),
-            "addmissionYear": check <int>student.selectDescendants("addmissionYear").getTextValue(),
-            "usCitizen": student.selectDescendants("usCitizen").getTextValue(),
+            "studentId": student.studentId.getTextValue(),
+            "fullName": student.firstName.getTextValue()
+                + " " + student.lastName.getTextValue(),
+            "age": calculateAge(student.birthDate.getTextValue()),
+            "addmissionYear": check <int>student.addmissionYear.getTextValue(),
+            "usCitizen": student.usCitizen.getTextValue(),
             "school": {
                 "schoolId": <string>(check <int>school.schoolId),
                 "name": school.name,
