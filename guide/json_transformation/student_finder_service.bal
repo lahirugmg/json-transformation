@@ -151,7 +151,7 @@ function calculateAge(string dateOfBirth) returns int {
 
         if ((time.month() < check <int>dataOfBirthValues[1]) || ((time.month() == check <int>dataOfBirthValues[1])
                 && time.day() < check <int>dataOfBirthValues[0])) {
-            age--;
+            age -= 1;
         }
 
     } catch (error e) {
