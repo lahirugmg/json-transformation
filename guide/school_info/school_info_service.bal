@@ -60,14 +60,8 @@ service<http:Service> schoolInfoService bind schoolInfoListener {
         path: "/{schoolId}"
     }
     getSchool(endpoint client, http:Request req, string schoolId) {
-        http:Response response;
-        json schoolDetails;
-        // Mock logic
-        // Details of the school
 
-        // Response payload
-        response.setJsonPayload(schoolMap[schoolId]);
         // Send the response to the caller
-        _ = client->respond(response);
+        _ = client->respond(schoolMap[schoolId]);
     }
 }
